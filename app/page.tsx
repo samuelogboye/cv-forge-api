@@ -26,6 +26,18 @@ export default function Home() {
           <li>DELETE /api/cvs/[id] - Delete CV</li>
         </ul>
 
+        <h3>AI Features</h3>
+        <ul>
+          <li>POST /api/ai/optimize - Optimize CV for job description</li>
+          <li>GET /api/ai/usage - Get AI usage statistics</li>
+        </ul>
+
+        <h3>Import Features</h3>
+        <ul>
+          <li>POST /api/import/parse-text - Parse pasted resume text</li>
+          <li>POST /api/import/parse-document - Parse PDF/DOCX resume</li>
+        </ul>
+
         <h3>Health Check</h3>
         <ul>
           <li>GET /api/health - API health status</li>
