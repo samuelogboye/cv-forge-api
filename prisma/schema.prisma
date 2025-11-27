@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User model for authentication
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // Relations
+  cvs          CV[]
+  subscription Subscription?
+  settings     UserSettings?
+  aiUsage      AIUsage[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// CV/Resume model
+model CV {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  title     String
+  content   String    @db.Text
+  template  String    @default("modern")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([updatedAt])
+  @@map("cvs")
+}
+
+// Subscription model for billing
+model Subscription {
+  id                   String            @id @default(uuid())
+  userId               String            @unique @map("user_id")
+  planId               String            @map("plan_id")
+  stripeCustomerId     String            @map("stripe_customer_id")
+  stripeSubscriptionId String            @map("stripe_subscription_id")
+  status               SubscriptionStatus
+  currentPeriodEnd     DateTime          @map("current_period_end")
+  cancelAtPeriodEnd    Boolean           @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  active
+  canceled
+  past_due
+  unpaid
+}
+
+// User settings and preferences
+model UserSettings {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  emailNotifications   Boolean  @default(true) @map("email_notifications")
+  weeklyDigest         Boolean  @default(false) @map("weekly_digest")
+  theme                String   @default("light")
+  language             String   @default("en")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+// AI usage tracking for billing and analytics
+model AIUsage {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  operationType String   @map("operation_type")
+  inputTokens   Int      @map("input_tokens")
+  outputTokens  Int      @map("output_tokens")
+  cost          Decimal  @db.Decimal(10, 6)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_usage")
+}
