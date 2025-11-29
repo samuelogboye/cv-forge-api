@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "This document specifies all API endpoints and backend requirements needed to support the CVForge UI.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 8000",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 8000",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -42,6 +42,9 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "stripe": "^20.0.0",
+    "swagger-ui-dist": "^5.30.3",
+    "swagger-ui-react": "^5.30.3",
+    "yaml": "^2.8.1",
     "zod": "^4.1.13"
   },
   "devDependencies": {
