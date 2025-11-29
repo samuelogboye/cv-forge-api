@@ -1,12 +1,15 @@
-import pdf from 'pdf-parse';
 import mammoth from 'mammoth';
+
+// Import pdf-parse as external CommonJS module
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse');
 
 /**
  * Extract text from PDF buffer
  */
 export async function parsePDF(buffer: Buffer): Promise<string> {
   try {
-    const data = await pdf(buffer);
+    const data = await pdfParse(buffer);
     return data.text;
   } catch (error) {
     console.error('PDF parsing error:', error);
