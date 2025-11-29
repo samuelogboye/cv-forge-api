@@ -1,0 +1,441 @@
+openapi: 3.0.3
+info:
+  title: CVForge API
+  description: |
+    AI-powered resume builder API with subscription management, CV CRUD operations,
+    AI optimization, and resume import features.
+  version: 1.0.0
+  contact:
+    name: CVForge Team
+    email: support@cvforge.com
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.cvforge.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: CVs
+    description: Resume/CV management
+  - name: AI
+    description: AI-powered optimization
+  - name: Import
+    description: Resume import from various formats
+  - name: Billing
+    description: Subscription and billing management
+  - name: Users
+    description: User profile and settings
+  - name: Webhooks
+    description: External webhook handlers
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+                  minLength: 1
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/cvs:
+    get:
+      tags: [CVs]
+      summary: List all user's CVs
+      responses:
+        '200':
+          description: List of CVs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cvs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CV'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [CVs]
+      summary: Create a new CV
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, content, template]
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                template:
+                  type: string
+                  enum: [modern, classic, minimal, executive]
+      responses:
+        '201':
+          description: CV created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CV'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/cvs/{id}:
+    get:
+      tags: [CVs]
+      summary: Get specific CV by ID
+      parameters:
+        - $ref: '#/components/parameters/CVId'
+      responses:
+        '200':
+          description: CV details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CV'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [CVs]
+      summary: Update CV
+      parameters:
+        - $ref: '#/components/parameters/CVId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                template:
+                  type: string
+      responses:
+        '200':
+          description: CV updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CV'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [CVs]
+      summary: Delete CV (soft delete)
+      parameters:
+        - $ref: '#/components/parameters/CVId'
+      responses:
+        '204':
+          description: CV deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/ai/optimize:
+    post:
+      tags: [AI]
+      summary: Optimize CV content using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, jobDescription]
+              properties:
+                content:
+                  type: string
+                jobDescription:
+                  type: string
+      responses:
+        '200':
+          description: Optimized content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  optimizedContent:
+                    type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+        '403':
+          description: AI optimization limit reached
+
+  /api/billing/plans:
+    get:
+      tags: [Billing]
+      summary: Get all subscription plans
+      security: []
+      responses:
+        '200':
+          description: List of plans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubscriptionPlan'
+
+  /api/billing/subscription:
+    get:
+      tags: [Billing]
+      summary: Get user's current subscription
+      responses:
+        '200':
+          description: Current subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /api/billing/upgrade:
+    post:
+      tags: [Billing]
+      summary: Create checkout session for upgrade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, successUrl, cancelUrl]
+              properties:
+                planId:
+                  type: string
+                  enum: [pro, enterprise]
+                successUrl:
+                  type: string
+                  format: uri
+                cancelUrl:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CVId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    CV:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        template:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SubscriptionPlan:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+        interval:
+          type: string
+          nullable: true
+        features:
+          type: array
+          items:
+            type: string
+
+    Subscription:
+      type: object
+      properties:
+        planId:
+          type: string
+        status:
+          type: string
+        currentPeriodEnd:
+          type: string
+          format: date-time
+          nullable: true
+        cancelAtPeriodEnd:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Conflict:
+      description: Conflict - resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
