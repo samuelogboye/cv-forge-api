@@ -27,8 +27,8 @@ export const Errors = {
     new APIError('Invalid email or password', 401, 'INVALID_CREDENTIALS'),
 
   // Authorization errors (403)
-  FORBIDDEN: (message = 'Forbidden') =>
-    new APIError(message, 403, 'FORBIDDEN'),
+  FORBIDDEN: (message = 'Forbidden', code = 'FORBIDDEN') =>
+    new APIError(message, 403, code),
   RESOURCE_NOT_FOUND: () =>
     new APIError('Resource not found or access denied', 403, 'RESOURCE_NOT_FOUND'),
 
@@ -57,6 +57,8 @@ export const Errors = {
   // Rate limit errors (429)
   RATE_LIMIT: () =>
     new APIError('Too many requests. Please try again later.', 429, 'RATE_LIMIT'),
+  RATE_LIMIT_EXCEEDED: (message: string) =>
+    new APIError(message, 429, 'RATE_LIMIT_EXCEEDED'),
 
   // Server errors (500)
   INTERNAL_ERROR: (message = 'Internal server error') =>
@@ -112,3 +114,14 @@ export function errorResponse(error: unknown): NextResponse {
 export function successResponse(data: any, statusCode = 200): NextResponse {
   return NextResponse.json(data, { status: statusCode });
 }
+
+/**
+ * Handle error and return appropriate response (alias for errorResponse)
+ */
+export const handleError = errorResponse;
+
+/**
+ * Export Errors as APIError for convenience
+ * Usage: APIError.UNAUTHORIZED(), APIError.BAD_REQUEST(), etc.
+ */
+export { Errors as APIError };
