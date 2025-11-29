@@ -99,3 +99,17 @@ export function isEmailValid(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
+
+/**
+ * Authenticate request and return user payload
+ * Throws error if authentication fails
+ */
+export async function authenticate(request: NextRequest): Promise<JWTPayload> {
+  const user = await verifyAuth(request);
+
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+
+  return user;
+}
