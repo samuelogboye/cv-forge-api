@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserService } from '@/app/services/user.service';
 import { APIError } from '@/lib/errors';
+import { parseRequestBody } from '@/lib/request-utils';
 import { z } from 'zod';
 
 const updateSettingsSchema = z.object({
@@ -41,7 +42,7 @@ export class UserController {
    */
   static async updateSettings(request: NextRequest, userId: string) {
     try {
-      const body = await request.json();
+      const body = await parseRequestBody(request);
       const validated = updateSettingsSchema.parse(body);
 
       const settings = await UserService.updateSettings(userId, validated);
@@ -80,7 +81,7 @@ export class UserController {
    */
   static async updateProfile(request: NextRequest, userId: string) {
     try {
-      const body = await request.json();
+      const body = await parseRequestBody(request);
       const validated = updateProfileSchema.parse(body);
 
       const user = await UserService.updateProfile(userId, validated);
@@ -109,7 +110,7 @@ export class UserController {
    */
   static async changePassword(request: NextRequest, userId: string) {
     try {
-      const body = await request.json();
+      const body = await parseRequestBody(request);
       const validated = changePasswordSchema.parse(body);
 
       const result = await UserService.changePassword(
@@ -139,7 +140,7 @@ export class UserController {
    */
   static async updatePreferences(request: NextRequest, userId: string) {
     try {
-      const body = await request.json();
+      const body = await parseRequestBody(request);
       const validated = updateSettingsSchema.parse(body);
 
       const preferences = await UserService.updatePreferences(userId, validated);

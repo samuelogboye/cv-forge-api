@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BillingService } from '@/app/services/billing.service';
 import { APIError } from '@/lib/errors';
+import { parseRequestBody } from '@/lib/request-utils';
 import { z } from 'zod';
 
 const upgradeSchema = z.object({
@@ -50,7 +51,7 @@ export class BillingController {
    */
   static async upgrade(request: NextRequest, userId: string) {
     try {
-      const body = await request.json();
+      const body = await parseRequestBody(request);
       const validated = upgradeSchema.parse(body);
 
       const session = await BillingService.createCheckoutSession(
@@ -80,7 +81,7 @@ export class BillingController {
    */
   static async getCustomerPortal(request: NextRequest, userId: string) {
     try {
-      const body = await request.json();
+      const body = await parseRequestBody(request);
       const validated = customerPortalSchema.parse(body);
 
       const portal = await BillingService.getCustomerPortalUrl(
