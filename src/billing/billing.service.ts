@@ -8,14 +8,21 @@ export class BillingService {
   constructor(private prisma: PrismaService) {}
 
   async getPlans() {
-    return Object.values(SUBSCRIPTION_PLANS).map(plan => ({
+    const plans = Object.values(SUBSCRIPTION_PLANS).map((plan, index) => ({
       id: plan.id,
       name: plan.name,
       price: plan.price,
-      currency: plan.currency,
-      interval: plan.interval,
+      period: plan.interval || 'month', // Frontend expects 'period' not 'interval'
+      description: plan.name === 'Free'
+        ? 'Get started with basic features'
+        : plan.name === 'Professional'
+        ? 'Best for professionals and job seekers'
+        : 'Advanced features for teams',
       features: plan.features,
+      popular: plan.id === 'pro', // Mark Pro plan as popular
     }));
+
+    return { plans }; // Wrap in object as frontend expects { plans: [] }
   }
 
   async getUserSubscription(userId: string) {
@@ -33,19 +40,24 @@ export class BillingService {
 
     if (!subscription) {
       return {
-        planId: 'free',
-        status: 'active',
-        currentPeriodEnd: null,
-        cancelAtPeriodEnd: false,
+        subscription: {
+          id: 'free',
+          planId: 'free',
+          status: 'active',
+          currentPeriodEnd: null,
+          autoRenew: true,
+        },
       };
     }
 
     return {
-      planId: subscription.planId,
-      status: subscription.status,
-      currentPeriodEnd: subscription.currentPeriodEnd,
-      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-      stripeSubscriptionId: subscription.stripeSubscriptionId,
+      subscription: {
+        id: subscription.id,
+        planId: subscription.planId,
+        status: subscription.status,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        autoRenew: !subscription.cancelAtPeriodEnd,
+      },
     };
   }
 
@@ -106,7 +118,7 @@ export class BillingService {
 
     return {
       sessionId: session.id,
-      url: session.url,
+      checkoutUrl: session.url, // Frontend expects 'checkoutUrl'
     };
   }
 
@@ -125,7 +137,7 @@ export class BillingService {
     });
 
     return {
-      url: session.url,
+      portalUrl: session.url, // Frontend expects 'portalUrl'
     };
   }
 
